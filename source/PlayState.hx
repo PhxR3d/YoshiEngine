@@ -1,6 +1,7 @@
 package;
 
 
+import charter.YoshiCharter;
 import charter.ChartingState_New;
 import flixel.graphics.FlxGraphic;
 import Script.ScriptPack;
@@ -527,6 +528,17 @@ class PlayState extends MusicBeatState
 		}
 		super.destroy();
 	}
+
+	public static function checkSong() {
+		if (_SONG.keyNumber == null)
+			_SONG.keyNumber = 4;
+		
+		if (_SONG.noteTypes == null)
+			_SONG.noteTypes = ["Friday Night Funkin':Default Note"];
+
+		if (_SONG.events == null)
+			_SONG.events = [];
+	}
 	var actualModConfig:ModConfig;
 	override public function create()
 	{
@@ -610,14 +622,7 @@ class PlayState extends MusicBeatState
 		if (_SONG == null)
 			_SONG = Song.loadModFromJson('tutorial', 'Friday Night Funkin\'');
 
-		if (_SONG.keyNumber == null)
-			_SONG.keyNumber = 4;
-		
-		if (_SONG.noteTypes == null)
-			_SONG.noteTypes = ["Friday Night Funkin':Default Note"];
-
-		if (_SONG.events == null)
-			_SONG.events = [];
+		checkSong();
 
 		SONG = Reflect.copy(_SONG);
 
@@ -2058,7 +2063,10 @@ class PlayState extends MusicBeatState
 		{
 			if (FlxG.sound.music != null) FlxG.sound.music.pause();
 			
-			FlxG.switchState(new ChartingState_New());
+			if (Settings.engineSettings.data.yoshiEngineCharter)
+				FlxG.switchState(new YoshiCharter());
+			else
+				FlxG.switchState(new ChartingState_New());
 
 			#if desktop
 			DiscordClient.changePresence("Chart Editor", null, null, true);
