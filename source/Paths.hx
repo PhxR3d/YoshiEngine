@@ -26,7 +26,7 @@ class Paths
 
 	static var currentLevel:String;
 
-	public static var copyBitmap:Bool = false;
+	public static var currentLibrary:String = ""; // FOR SCRIPTS!!!
 
 	static public function setCurrentLevel(name:String)
 	{
@@ -367,7 +367,7 @@ class Paths
 		// 		}
 		// 	}
 		// }
-		return (copyBitmap ? b : Paths.cacheBitmap[cachePath]);
+		return (Paths.cacheBitmap[cachePath]);
 	}
 	inline static public function getBytesOutsideAssets(path:String) {
 		// trace(path);
@@ -505,6 +505,12 @@ class Paths
 	{
 		if (library == "mods/~" || library.endsWith("~")) library = "skins";
 		return getPath('characters/$key/icon.png', IMAGE, library);
+	}
+
+	inline static public function getCharacterIconXml(key:String, library:String)
+	{
+		if (library == "mods/~" || library.endsWith("~")) library = "skins";
+		return getPath('characters/$key/icon.xml', IMAGE, library);
 	}
 
 	// inline static public function getCharacterPacker(key:String)

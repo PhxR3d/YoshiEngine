@@ -46,6 +46,7 @@ import flixel.math.FlxMath;
 import flixel.tweens.FlxTween;
 import flixel.input.keyboard.FlxKey;
 import mod_support_stuff.*;
+import stage.Stage;
 
 using StringTools;
 
@@ -474,7 +475,7 @@ class ModSupport {
         var songName = PlayState._SONG.song.toLowerCase();
         var songCodePath = Paths.modsPath + '/$currentMod/song_conf';
 
-        var songConf = SongConf.parse(PlayState.songMod, PlayState.SONG.song);
+        var songConf = SongConf.parse(PlayState.songMod, PlayState.SONG.song, PlayState.SONG);
 
         scripts = songConf.scripts;
         song_cutscene = songConf.cutscene;

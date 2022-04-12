@@ -157,7 +157,7 @@
 	<!-- <haxelib name="flixel-animate"/> -->
 	<haxelib name="discord_rpc" if="desktop"/>
 	<haxedef name="enable_updates"/> <!-- DISABLE IF DOING EXE MOD !-->
-	<!-- <haxelib name="zip"/> -->
+	<haxelib name="hxp"/>
 
 	<!-- <haxelib name="hxcpp-debug-server" if="desktop"/> -->
 
@@ -231,6 +231,6 @@
 	<haxedef name="MOBILE_UI" if="android"/>
 	
 	<haxeflag name="-dce" value="no" />
-	<haxeflag name="-xml" value="crafterengine/doc.xml" />
+	<haxeflag name="-xml" value="yoshicrafterengine/doc.xml" />
 
 </project>

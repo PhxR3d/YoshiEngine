@@ -27,7 +27,7 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import lime.utils.Assets;
+import openfl.utils.Assets;
 
 using StringTools;
 
@@ -481,10 +481,12 @@ class FreeplayState extends MusicBeatState
 		super.update(elapsed);
 		
 
-		if (Settings.engineSettings.data.developerMode) {
-			if (FlxControls.justPressed.F6) openSubState(new LogSubState());
+		if (!(ModSupport.modConfig[Settings.engineSettings.data.selectedMod] != null && ModSupport.modConfig[Settings.engineSettings.data.selectedMod].locked)) {
+			if (Settings.engineSettings.data.developerMode) {
+				if (FlxControls.justPressed.F6) openSubState(new LogSubState());
+			}
+			if (FlxControls.justPressed.F5) FlxG.resetState();
 		}
-		if (FlxControls.justPressed.F5) FlxG.resetState();
 		if (FlxControls.justPressed.TAB) openSubState(new SwitchModSubstate());
 
 		shiftCooldown += elapsed;

@@ -1,5 +1,7 @@
-package;
+package stage;
 
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
 import haxe.Unserializer;
 import lime.utils.Assets;
 import dev_toolbox.stage_editor.FlxStageSprite;
@@ -9,35 +11,7 @@ import haxe.Json;
 import flixel.FlxSprite;
 import sys.FileSystem;
 
-typedef StageJSON = {
-	var defaultCamZoom:Null<Float>;	
-	var bfOffset:Array<Float>;	
-	var gfOffset:Array<Float>;	
-	var dadOffset:Array<Float>;
-	var sprites:Array<StageSprite>;
-}
-
-typedef StageSprite = {
-	var name:String;
-	var type:String;
-	@:optional var animation:StageAnim;
-	@:optional var src:String;
-	@:optional var pos:Array<Float>;
-	@:optional var antialiasing:Null<Bool>;
-	var scrollFactor:Array<Float>;
-	@:optional var scale:Null<Float>;
-}
-
-typedef StageAnim = {
-	var name:String;
-	var fps:Null<Int>;
-	var type:String;
-}
-
-typedef OnBeatAnimSprite = {
-	var anim:String;
-	var sprite:FlxSprite;
-}
+using StringTools;
 
 class Stage {
 	public static var templateStage:StageJSON = {
@@ -66,6 +40,7 @@ class Stage {
 	public var sprites:Map<String, FlxSprite> = [];
 	public var onBeatAnimSprites:Array<OnBeatAnimSprite> = [];
 	public var onBeatForceAnimSprites:Array<OnBeatAnimSprite> = [];
+	public var onBeatTweenSprites:Array<OnBeatTweenSprite> = [];
 	public function getSprite(name:String) {
 		return sprites[name];
 	}
@@ -91,7 +66,6 @@ class Stage {
 			} else if (Assets.exists(Paths.stage(Path.withoutExtension(splitPath[0]), 'mods/Friday Night Funkin\''))) {
 				jsonMode = true;
 				splitPath.insert(0, "Friday Night Funkin'");
-			// psych users be hungry tonight
 			} else if (Assets.exists(Paths.stage(Path.withoutExtension(splitPath[0]), 'mods/Friday Night Funkin\'', 'stage'))) {
 				splitPath.insert(0, "Friday Night Funkin'");
 			}
@@ -144,6 +118,7 @@ class Stage {
 
 		if (json.sprites != null) {
 			for(s in json.sprites) {
+				var resultSprite:FlxStageSprite = null;
 				switch(s.type) {
 					case "SparrowAtlas":
 						var sAtlas = generateSparrowAtlas(s, splitPath[0]);
@@ -164,25 +139,44 @@ class Stage {
 								});
 							}
 						}
+						resultSprite = sAtlas;
 					case "Bitmap":
 						var bmap = generateBitmap(s, splitPath[0]);
 						if (s.name != null) sprites[s.name] = bmap;
 						PlayState.add(bmap);
+						resultSprite = bmap;
 					case "BF":
-						doTheChar(PlayState.boyfriend, s);
+						doTheChar(PlayState.boyfriend, s, mod);
 						PlayState.add(PlayState.boyfriend);
 					case "GF":
-						doTheChar(PlayState.gf, s);
+						doTheChar(PlayState.gf, s, mod);
 						PlayState.add(PlayState.gf);
 					case "Dad":
-						doTheChar(PlayState.dad, s);
+						doTheChar(PlayState.dad, s, mod);
 						PlayState.add(PlayState.dad);
+				}
+				if (resultSprite != null) {
+					if (s.beatTween != null && ((s.beatTween.x != 0 && s.beatTween.x != null) || (s.beatTween.y != 0 && s.beatTween.y != null))) {
+						if (s.beatTween.x == null) s.beatTween.x = 0;
+						if (s.beatTween.y == null) s.beatTween.y = 0;
+						var ease:Float->Float = function(v) {return v;}
+						var requestedEase = Reflect.getProperty(FlxEase, s.beatTween.ease);
+						if (Std.isOfType(requestedEase, Float->Float)) {
+							ease = requestedEase;
+						}
+
+						onBeatTweenSprites.push({
+							sprite: resultSprite,
+							offset: s.beatTween,
+							easeFunc: requestedEase
+						});
+					}
 				}
 			}
 		}
 	}
 
-	function doTheChar(char:Character, s:StageSprite) {
+	function doTheChar(char:Character, s:StageSprite, mod:String) {
 		var scrollFactor = s.scrollFactor;
 		if (scrollFactor == null) scrollFactor = [1, 1];
 		while (scrollFactor.length < 2) scrollFactor.push(1);
@@ -194,6 +188,28 @@ class Stage {
 		// char.scale.set(s.scale, s.scale);
 		// char.x += (char.charGlobalOffset.x * (s.scale - 1));
 		// char.y += (char.charGlobalOffset.y * (s.scale - 1));
+		doTheCharShader(char, s, mod);
+	}
+	public static function doTheCharShader(char:FlxSprite, s:StageSprite, mod:String) {
+		if (s.shader != null) {
+			var split = s.shader.split(":");
+			if (split.length < 2) split.insert(0, mod);
+			char.shader = new CustomShader(split.join(":"), split.join(":"), []);
+			if (Std.isOfType(char, FlxStageSprite)) cast(char, FlxStageSprite).shaderName = s.shader;
+		}
+	}
+	public static function doTheRest(sprite:FlxStageSprite, s:StageSprite, mod:String) {
+		if (s.scale != null) {
+			sprite.scale.set(s.scale, s.scale);
+			sprite.updateHitbox();
+		}
+		if (s.shader != null && s.shader.trim() != "") {
+			var split = s.shader.split(":");
+			if (split.length < 2) split.insert(0, mod);
+			sprite.shader = new CustomShader(split.join(":"), split.join(":"), []);
+			sprite.shaderName = s.shader;
+		}
+		sprite.onBeatOffset = s.beatTween;
 	}
 	public static function generateSparrowAtlas(s:StageSprite, mod:String) {
 		var pos:FlxPoint = new FlxPoint(0, 0);
@@ -236,12 +252,9 @@ class Stage {
 				}
 			}
 		}
-		if (s.scale != null) {
-			sprite.scale.set(s.scale, s.scale);
-			sprite.updateHitbox();
-		}
 
 		// if (s.name != null) sprites[s.name] = sprite;
+		doTheRest(sprite, s, mod);
 		return sprite;
 	}
 
@@ -269,10 +282,7 @@ class Stage {
 			// var bitmap = Paths.getBitmapOutsideAssets('${Paths.modsPath}/${mod}/images/${s.src}.png');
 			if (Assets.exists(bitmap)) sprite.loadGraphic(bitmap);
 		}
-		if (s.scale != null) {
-			sprite.scale.set(s.scale, s.scale);
-			sprite.updateHitbox();
-		}
+		doTheRest(sprite, s, mod);
 		return sprite;
 	}
 
@@ -287,6 +297,13 @@ class Stage {
 	}
 	
 	public function update(elapsed:Float) {
-		// useless for now, but may add stuff
+		for(e in onBeatTweenSprites) {
+			if (Conductor.crochet == 0) {
+				e.sprite.offset.set(0, 0);
+			} else {
+				var easeVar = e.easeFunc((Conductor.songPosition / Conductor.crochet) % 1);
+				e.sprite.offset.set(e.offset.x * easeVar, e.offset.y * easeVar);
+			}
+		}
 	}
 }
