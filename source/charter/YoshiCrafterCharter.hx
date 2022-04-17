@@ -1,5 +1,8 @@
 package charter;
 
+import sys.io.File;
+import sys.FileSystem;
+import dev_toolbox.ToolboxMessage;
 import flixel.group.FlxSpriteGroup;
 import openfl.net.FileReference;
 import haxe.Json;
@@ -131,7 +134,8 @@ class YoshiCrafterCharter extends MusicBeatState {
 
     public function compile() { // out of ideas for a func name
         for (s in _song.notes) {
-            s.sectionNotes = []; // resets
+            if (s != null) 
+                s.sectionNotes = []; // resets
         }
         _song.events = [];
 
@@ -223,6 +227,7 @@ class YoshiCrafterCharter extends MusicBeatState {
         //hitsound.persist = true;
         hitsound.autoDestroy = false;
 
+        
         super.create();
     }
 
@@ -406,7 +411,7 @@ class YoshiCrafterCharter extends MusicBeatState {
         settingsTab.add(hitsoundsEnabledCheckbox);
 
         hitsoundsBFCheckbox = new FlxUICheckBox(10 + (hitsoundsEnabledCheckbox.width / 2), y, null, null, "For the Player", 105, null, function() {
-            hitsoundsBFEnabled = hitsoundsBFCheckbox.checked;
+            Settings.engineSettings.data.charter_hitsoundsEnabledBF = hitsoundsBFEnabled = hitsoundsBFCheckbox.checked;
             hitsoundsEnabledCheckbox.checked = hitsoundsBFEnabled && hitsoundsDadEnabled;
         });
         hitsoundsBFCheckbox.scrollFactor.set(0, 0);
@@ -414,7 +419,7 @@ class YoshiCrafterCharter extends MusicBeatState {
         settingsTab.add(hitsoundsBFCheckbox);
 
         hitsoundsDadCheckbox = new FlxUICheckBox(10, y, null, null, "For the Opponent", 105, null, function() {
-            hitsoundsDadEnabled = hitsoundsDadCheckbox.checked;
+            Settings.engineSettings.data.charter_hitsoundsEnabledGF = hitsoundsDadEnabled = hitsoundsDadCheckbox.checked;
             hitsoundsEnabledCheckbox.checked = hitsoundsBFEnabled && hitsoundsDadEnabled;
         });
         hitsoundsDadCheckbox.scrollFactor.set(0, 0);
@@ -627,14 +632,27 @@ class YoshiCrafterCharter extends MusicBeatState {
             }));
         });
         changePlayer2Button.resize(135, 20);
+
+        var gf = _song.gfVersion.split(":");
+        if (gf.length < 2) gf.insert(0, '');
+        var gfLabel:FlxUIText = new FlxUIText(10, changePlayer1Button.y + changePlayer1Button.height + 10, 135, gf.join("\n"));
+        gfLabel.alignment = CENTER;
+        var changeGFButton:FlxUIButton = new FlxUIButton(gfLabel.x, gfLabel.y + gfLabel.height + 5, "Change Girlfriend", function() {
+            openSubState(new ChooseCharacterScreen(function(mod, char) {
+                _song.gfVersion = '$mod:$char';
+                // iconP2.changeCharacter(char, mod);
+                gfLabel.text = '$mod\n$char';
+            }));
+        });
+        changeGFButton.resize(135, 20);
         
-        var refreshButton = new FlxUIButton(10, changePlayer2Button.y + changePlayer2Button.height + 10, "Refresh", function() {
+        var refreshButton = new FlxUIButton(10, changeGFButton.y + changeGFButton.height + 10, "Refresh", function() {
             compile();
             PlayState._SONG = _song;
             FlxG.resetState();
         });
         
-        var saveButton = new FlxUIButton(refreshButton.x + refreshButton.width + 10, changePlayer2Button.y + changePlayer2Button.height + 10, "Save", function() {
+        var saveButton = new FlxUIButton(refreshButton.x + refreshButton.width + 10, refreshButton.y, "Save", function() {
             compile();
             _song.validScore = true;
             var references = false;
@@ -673,6 +691,48 @@ class YoshiCrafterCharter extends MusicBeatState {
 
             _song.noteTypes = oldArray;
         });
+        saveButton.color = 0xFF44FF44;
+        // saveButton.label.color = 0xFF000000;
+        
+        saveButton.label.setFormat(null, 8, 0xFFFFFFFF, CENTER, OUTLINE, 0xFF268F26);
+
+        var editScriptsButton = new FlxUIButton(10, saveButton.y + saveButton.height + 10, "Edit Chart Scripts", function() {
+            openSubState(new ScriptPicker(function(scripts:Array<String>) {
+                _song.scripts = [];
+                for(s in scripts) _song.scripts.push(s);
+            }, _song.scripts));
+        });
+        editScriptsButton.resize(135, 20);
+
+        var editSongConfButton = new FlxUIButton(155, editScriptsButton.y, "Edit Song Scripts", function() {
+            if (!Assets.exists(Paths.file('song_conf.json', TEXT, 'mods/${PlayState.songMod}'))) {
+                openSubState(ToolboxMessage.showMessage('Error', 'This mod does not have a JSON song configuration (song_conf.json)'));
+                return;
+            }
+
+            var songConf:SongConf.SongConfJson = {songs: null};
+            try {
+                songConf = Json.parse(Assets.getText(Paths.file('song_conf.json', TEXT, 'mods/${PlayState.songMod}')));
+            } catch(e) {
+
+            }
+            if (songConf.songs == null) songConf.songs = [];
+            var currentSong, oldSong:SongConf.SongConfSong = {name: _song.song, scripts: [], difficulties: null, cutscene: "", end_cutscene: ""};
+            currentSong = oldSong;
+            for(s in songConf.songs) {
+                if (s.name.toLowerCase() == _song.song.toLowerCase()) {
+                    currentSong = s;
+                    break;
+                }
+            }
+            if (currentSong == oldSong) songConf.songs.push(currentSong);
+            openSubState(new ScriptPicker(function(scripts:Array<String>) {
+                currentSong.scripts = scripts;
+
+                File.saveContent('${Paths.modsPath}/${PlayState.songMod}/song_conf.json', Json.stringify(songConf));
+            }, currentSong.scripts, "Edit Song Configuration", 1));
+        });
+        editSongConfButton.resize(135, 20);
 
 
         songTab.add(titleLabel);
@@ -686,8 +746,12 @@ class YoshiCrafterCharter extends MusicBeatState {
         songTab.add(changePlayer1Button);
         songTab.add(player2Label);
         songTab.add(changePlayer2Button);
+        songTab.add(gfLabel);
+        songTab.add(changeGFButton);
         songTab.add(refreshButton);
         songTab.add(saveButton);
+        songTab.add(editScriptsButton);
+        songTab.add(editSongConfButton);
         UI_Menu.addGroup(songTab);
     }
 
@@ -725,8 +789,10 @@ class YoshiCrafterCharter extends MusicBeatState {
         
     public function generateNotes() {
         for (s in _song.notes) {
-            for(n in s.sectionNotes) {
-                addNote(n[0], n[1], s.mustHitSection, n[2]);
+            if (s != null) {
+                for(n in s.sectionNotes) {
+                    addNote(n[0], n[1], s.mustHitSection, n[2]);
+                }
             }
         }
         if (_song.events == null) _song.events = [];
