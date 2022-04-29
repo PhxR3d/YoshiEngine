@@ -35,7 +35,8 @@ class Stage {
 				type: "Dad",
 				scrollFactor: [1, 1]
 			}
-		]
+		],
+        followLerp: 0.04
 	};
 	public var sprites:Map<String, FlxSprite> = [];
 	public var onBeatAnimSprites:Array<OnBeatAnimSprite> = [];
@@ -174,6 +175,8 @@ class Stage {
 				}
 			}
 		}
+
+		if (json.followLerp != null) PlayState.camFollowLerp = json.followLerp;
 	}
 
 	function doTheChar(char:Character, s:StageSprite, mod:String) {
@@ -199,6 +202,7 @@ class Stage {
 		}
 	}
 	public static function doTheRest(sprite:FlxStageSprite, s:StageSprite, mod:String) {
+		if (s.alpha != null) sprite.alpha = s.alpha;
 		if (s.scale != null) {
 			sprite.scale.set(s.scale, s.scale);
 			sprite.updateHitbox();
@@ -302,7 +306,10 @@ class Stage {
 				e.sprite.offset.set(0, 0);
 			} else {
 				var easeVar = e.easeFunc((Conductor.songPosition / Conductor.crochet) % 1);
-				e.sprite.offset.set(e.offset.x * easeVar, e.offset.y * easeVar);
+				
+				e.sprite.updateHitbox();
+				e.sprite.offset.x += e.offset.x * easeVar;
+				e.sprite.offset.y += e.offset.y * easeVar;
 			}
 		}
 	}

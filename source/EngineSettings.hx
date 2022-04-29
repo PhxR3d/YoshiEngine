@@ -147,6 +147,31 @@ import flixel.FlxG;
 	 * Sets the GUI scale. Defaults to 1
 	 */
 	 @:keep public static var noteScale:Float = 1;
+	
+	/**
+	 * Maximum ratings allowed shown on screen. Helps with performance.
+	 */
+	 @:keep public static var maxRatingsAllowed:Int = 5;
+	
+	/**
+	 * Maximum amount of splashes. 0 disables them.
+	 */
+	 @:keep public static var maxSplashes:Int = 10;
+	
+	/**
+	 * Maximum amount of splashes. 0 disables them.
+	 */
+	 @:keep public static var splashesEnabled:Bool = true;
+	
+	/**
+	 * Maximum amount of splashes. 0 disables them.
+	 */
+	 @:keep public static var splashesAlpha:Float = 0.8;
+	
+	/**
+	 * Whenever splashes should be spawn behind or in front of the strums.
+	 */
+	 @:keep public static var spawnSplashBehind:Bool = false;
 
 
 	
@@ -303,13 +328,13 @@ class Settings {
 		}
 		engineSettings.flush();
 		
-		hscriptCache = new FlxSave();
-		hscriptCache.bind("_hscriptCache");
+		// hscriptCache = new FlxSave();
+		// hscriptCache.bind("_hscriptCache");
 		
-		hscriptCache.flush();
+		// hscriptCache.flush();
     }
 	
-	public static var hscriptCache:FlxSave = null;
+	// public static var hscriptCache:FlxSave = null;
 
     // public static function load(bind:Bool = true) {
 	// 	if (bind) FlxG.save.bind("Settings", "YoshiCrafter29/YoshiCrafter Engine");

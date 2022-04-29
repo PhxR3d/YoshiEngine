@@ -94,6 +94,8 @@ class Paths
 		if (!Settings.engineSettings.data.memoryOptimization) return;
 		Assets.cache.clear('mods/');
 		Assets.cache.clear('skins');
+		Assets.cache.clear('shared');
+		Assets.cache.clear('preload');
 	}
 	public static function clearOtherModCache(currentMod:String) {
 		if (!Settings.engineSettings.data.memoryOptimization) return;
@@ -485,6 +487,10 @@ class Paths
 	}
 	inline static public function getCharacterFolderPath_Array(character:Array<String>):String {
 		return '${Paths.modsPath}/${character[0]}/characters/${character[1]}';
+	}
+
+	inline static public function splashes(path:String, ?library:String = "shared") {
+		return getPath('images/$path', IMAGE, library);
 	}
 	inline static public function getModCharacter(characterId:String)
 	{

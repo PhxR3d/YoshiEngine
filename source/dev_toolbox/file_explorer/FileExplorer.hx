@@ -20,6 +20,7 @@ enum FileExplorerType {
     Lua;
     OGG;
 	Script;
+    Shader;
 }
 
 @:enum
@@ -164,7 +165,9 @@ class FileExplorer extends MusicBeatSubstate {
         this.mod = mod;
         this.callback = callback;
 
-        add(new FlxSprite(0, 0).makeGraphic(1280, 720, 0x88000000));
+        var bg:FlxSprite;
+        add(bg = new FlxSprite(0, 0).makeGraphic(1280, 720, 0x88000000));
+        bg.scrollFactor.set();
 
         this.type = type;
         fileType = switch(type) {
@@ -184,6 +187,8 @@ class FileExplorer extends MusicBeatSubstate {
                 ".lua script";
             case Script:
                 "script";
+            case Shader:
+                "shader (.frag or .vert)";
             case OGG:
                 "OGG sound";
         }
@@ -199,6 +204,8 @@ class FileExplorer extends MusicBeatSubstate {
                 "xml";
             case JSON:
                 "json";
+            case Shader:
+                "frag;vert";
             case HScript:
                 "hx;hscript;hsc";
             case Script:
@@ -214,6 +221,7 @@ class FileExplorer extends MusicBeatSubstate {
                 name: 'explorer'
             }
         ], true);
+        tabThingy.scrollFactor.set();
         tabThingy.resize(1280 * 0.75, 720 * 0.75);
 
         tab = new FlxUI(null, tabThingy);
