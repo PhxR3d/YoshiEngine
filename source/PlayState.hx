@@ -1,6 +1,7 @@
 package;
 
 
+import haxe.ds.EnumValueMap;
 import flixel.tweens.misc.VarTween;
 import charter.YoshiCrafterCharter;
 import charter.ChartingState_New;
@@ -215,9 +216,7 @@ class PlayState extends MusicBeatState
 	public var curSection:Int = 0;
 	
 	public var camFollow:FlxObject;
-	public var camFollowLerp(get, set):Float;
-	private function get_camFollowLerp():Float {return FlxG.camera.followLerp;}
-	private function set_camFollowLerp(v:Float):Float {return FlxG.camera.followLerp = v;}
+	public var camFollowLerp:Float = 0.04;
 	
 	static public var prevCamFollow:FlxObject;
 	
@@ -341,11 +340,12 @@ class PlayState extends MusicBeatState
 			FlxG.scaleMode = new RatioScaleMode();
 			FlxG.camera.width = 1280;
 			FlxG.camera.height = 720;
-			FlxG.camera.follow(camFollow, LOCKON, 0.04);
+			FlxG.camera.follow(camFollow, LOCKON, camFollowLerp);
 			camHUD.x = 0;
 			camHUD.y = 0;
 		}
 		if (scripts != null) scripts.executeFunc("onWidescreen", [enable]);
+
 		return enable;
 	}
 
@@ -2014,6 +2014,7 @@ class PlayState extends MusicBeatState
 	var discordTimer:Float = 0;
 	override public function update(elapsed:Float)
 	{
+		FlxG.camera.followLerp = camFollowLerp;
 		#if profiler cpp.vm.Profiler.start("log.txt"); #end
 		if (inCutscene) {
 			(endCutscene ? end_cutscene : cutscene).executeFunc("preUpdate", [elapsed]);
@@ -2622,7 +2623,7 @@ class PlayState extends MusicBeatState
 					
 					if (Std.isOfType(daNote.shader, ColoredNoteShader)) {
 						var shader = cast(daNote.shader, ColoredNoteShader);
-						var baseVal:Float = 0.0075 / 3 * 1024 * 0.7;
+						var baseVal:Float = daNote.pixels.height / 1024;
 						var angle:Float = (daNote.isSustainNote ? strum.getAngle() : strum.angle);
 						if (angle == 0 || angle == 180) {
 							shader.x.value = [0];
