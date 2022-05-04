@@ -5,6 +5,7 @@ import EngineSettings.Settings;
 import options.OptionScreen;
 import flixel.group.FlxSpriteGroup;
 import flixel.FlxSprite;
+import flixel.util.FlxColor;
 import flixel.FlxG;
 import Note.NoteDirection;
 import NoteShader.ColoredNoteShader;
