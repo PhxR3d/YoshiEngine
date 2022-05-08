@@ -23,6 +23,13 @@ class GameplayMenu extends OptionScreen {
                 onCreate: function(e) {e.check(Settings.engineSettings.data.downscroll);},
                 onSelect: function(e) {e.check(Settings.engineSettings.data.downscroll = !Settings.engineSettings.data.downscroll);}
             },
+	    {
+		name: "Ghost Tapping",
+		desc: "If enabled, you won't get misses from pressing keys while there are no notes able to be hit.",
+		value: "",
+		onCreate: function(e) {e.check(Settings.engineSettings.data.ghostTapping);},
+		onSelect: function(e) {e.check(Settings.engineSettings.data.ghostTapping = !Settings.engineSettings.data.ghostTapping);}
+	    },
             {
                 name: "Middlescroll",
                 desc: "If enabled, Strums will be centered, and opponent strums will be hidden.",
@@ -67,8 +74,15 @@ class GameplayMenu extends OptionScreen {
                 }
             },
             {
+                name: "Ghost Tapping",
+                desc: "If enabled, you won't get misses from pressing keys while there are no notes able to be hit.",
+                value: "",
+                onCreate: function(e) {e.check(Settings.engineSettings.data.ghostTapping);},
+                onSelect: function(e) {e.check(Settings.engineSettings.data.ghostTapping = !Settings.engineSettings.data.ghostTapping);}
+            },
+            {
                 name: "Configure Note Offset",
-                desc: "If enabled, Strums will be centered, and opponent strums will be hidden.",
+                desc: "Sync your Notes to the Song Beat, Useful for preventing audio lag from wireless earphones.",
                 value: '${Std.int(Settings.engineSettings.data.noteOffset)}ms',
                 onSelect: function(e) {doFlickerAnim(curSelected, function() {FlxG.switchState(new OffsetConfigState());});}
             },
